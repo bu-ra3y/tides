@@ -8,6 +8,7 @@ module.exports = {
     "plugin:@typescript-eslint/recommended",
     "plugin:@typescript-eslint/recommended-requiring-type-checking",
     "plugin:react-hooks/recommended",
+    "prettier", // Last so that this config can successfully disable all style rules
   ],
   parser: "@typescript-eslint/parser",
   parserOptions: {

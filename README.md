@@ -60,3 +60,11 @@ npm install --save-dev --save-exact prettier
 echo {}> .prettierrc.json
 npx prettier . --write
 ```
+
+Add [eslint-config-prettier](https://github.com/prettier/eslint-config-prettier)
+to have ESLint ignore style
+which will be handled by Prettier instead.
+
+```shell
+npm install --save-dev eslint-config-prettier
+```
