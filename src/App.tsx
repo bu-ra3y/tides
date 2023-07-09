@@ -1,41 +1,51 @@
 import "./App.css";
 import React from "react";
 import axios from "axios";
+import { Select } from "antd";
 
 function App() {
-  const [data, setData] = React.useState<Tide[]>([]);
-  React.useEffect(() => {
-    console.log(`Starting data request`);
-    axios
-      .get(
-        "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&begin_date=20230707&end_date=20230810&datum=MLLW&station=8446166&time_zone=lst_ldt&units=english&interval=hilo&format=json&application=NOS.COOPS.TAC.TidePred",
-      )
-      .then(({ data }) => {
-        setData(data.predictions);
-      })
-      .catch((error) => console.log(error));
-  }, []);
-
+  const [station, setStation] = React.useState<string>("");
   const [stations, setStations] = React.useState<Station[]>([]);
   React.useEffect(() => {
-    console.log(`Starting data request`);
     axios
       .get(
         "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.json?type=tidepredictions",
       )
-      .then((response) => {
-        const data = response.data.stations;
-        console.log(data);
-        setStations(data);
-      })
-      .catch((error) => console.log(error));
+      .then((response) => setStations(response.data.stations))
+      .catch((error) => console.error(error));
   }, []);
+
+  const [tides, setTides] = React.useState<Tide[]>([]);
+  React.useEffect(() => {
+    if (!station) return; // No station chosen yet
+    axios
+      .get(
+        `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&begin_date=20230707&end_date=20230810&datum=MLLW&station=${station}&time_zone=lst_ldt&units=english&interval=hilo&format=json&application=NOS.COOPS.TAC.TidePred`,
+      )
+      .then(({ data }) => setTides(data.predictions))
+      .catch((error) => console.error(error));
+  }, [station]);
 
   return (
     <>
+      <Select
+        showSearch
+        placeholder="Choose a Tide Station"
+        optionFilterProp="children"
+        onChange={(station: string) => setStation(station)}
+        size="large"
+        filterOption={filterSearch}
+        options={stations.map((station) => {
+          return {
+            label: `${station.name}, ${station.state}`,
+            value: station.id,
+          };
+        })}
+      />
       <h1>Tides</h1>
+      <h3>{tides.length} Tides</h3>
       <ul>
-        {data.map((i) => (
+        {tides.map((i) => (
           <li key={i.t}> {`${i.t} ${i.type}: ${i.v}`}</li>
         ))}
       </ul>
@@ -48,6 +58,23 @@ function App() {
     </>
   );
 }
+
+/** Filter which items match the user input.
+ *
+ * User input must match the start of any word in the phrase.
+ *
+ * "hi" matches "Honolulu, HI"
+ */
+const filterSearch = (input: string, item: Option) => {
+  const s = item?.label;
+  if (!s) return false;
+  return s
+    .toLowerCase()
+    .split(" ")
+    .some((word: string) => {
+      return word.startsWith(input.toLowerCase());
+    });
+};
 
 interface Tide {
   t: string;
@@ -73,6 +100,11 @@ interface Station {
   timemeridian: number;
   timezonecorr: number;
   type: string;
+}
+
+interface Option {
+  value: string;
+  label: string;
 }
 
 export default App;
